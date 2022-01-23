@@ -612,7 +612,7 @@ class BacktestInverse(Backtest):
         # https://help.bybit.com/hc/en-us/articles/360039261334-How-to-calculate-Liquidation-Price-Inverse-Contract-
         # Check if the position needs to be liquidated.
         """
-        if self.position == 0:
+        if self.position.contracts == 0:
             return
         else:
             if self.cross_margin:
@@ -744,10 +744,7 @@ class BacktestInverse(Backtest):
         return abs(order.contracts) * ((1 / price) - (1 / self.position.price))
 
     def _get_order_position_aep(self, order: Order) -> float:
-        if self.position.contracts == 0:
-            return order.price
-        else:
-            return (self.position.contracts + order.contracts) / ((self.position.contracts / self.position.price) +
+        return (self.position.contracts + order.contracts) / ((self.position.contracts / self.position.price) +
                                                               (order.contracts / order.price))
 
         #return ((order.contracts * order.price) + (self.position.contracts * self.position.price)) / \
@@ -783,7 +780,7 @@ class BacktestInverse(Backtest):
             execution.taker_or_maker = order.taker_or_maker
             self.session.add(execution)
 
-            if self.position == 0:
+            if self.position.contracts == 0:
                 self.position.price = order_tmp.price
                 self.position.contracts = order_tmp.contracts
             else:
@@ -824,7 +821,7 @@ class BacktestInverse(Backtest):
             self.position.contracts += order_tmp.contracts
             self.wallet.total_rpnl += rpnl
 
-            if self.position == 0:
+            if self.position.contracts == 0:
                 self._reset_position()
 
         # Seitenwechel
