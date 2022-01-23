@@ -1,0 +1,37 @@
+{
+    "metastrategy_id": "RsiPowerzones",
+
+    "exchange_default_parameters": {
+        "backtest_start": "01.04.2020",
+        "backtest_end": "01.06.2020",
+        "initial_deposit": 1,
+        "tradable_balance_ratio": 0.75,
+        "maker_fee": -0.0002,
+        "taker_fee": -0.0004
+    },
+
+    "user_data_dir": "user_data",
+    "strategy_data_dir": "strategies",
+
+    "subaccounts": [
+        {
+            "subaccount_id": "RsiPowerzonesBtc",
+            "strategy": "SmaCrossover",
+
+            "exchange": {
+                "endpoint": "backtest_inverse",
+                "api_key": "key",
+                "api_secret": "secret"
+            },
+
+            "main_pair": {
+                "endpoint": "binance_futures",
+                "api_key": "",
+                "api_secret": "",
+                "pair": "BTC/USDT",
+                "timeframe": 15
+            }
+        }
+    ]
+
+}
