@@ -10,9 +10,6 @@
         "taker_fee": -0.0004
     },
 
-    "user_data_dir": "user_data",
-    "strategy_data_dir": "strategies",
-
     "subaccounts": [
         {
             "subaccount_id": "RsiPowerzonesBtc",

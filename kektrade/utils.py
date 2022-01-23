@@ -30,7 +30,7 @@ def get_history_dir(config: Dict[str, Any]) -> Path:
     :param config: config file
     :return: path to folder
     """
-    folder = Path(os.path.join(config["user_data_dir"], "history"))
+    folder = config["history_data_dir"]
     return folder
 
 def get_run_history_dir(config: Dict[str, Any], run_id: str) -> Path:

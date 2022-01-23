@@ -54,7 +54,7 @@ class SubaccountItem():
         Create all the strategy and excahnge objects because they can't be pickled.
         """
         (module_path, strategy) = StrategyResolver.load_strategy(
-            search_path=os.path.join(self.config["user_data_dir"], self.config["strategy_data_dir"]),
+            search_path=self.config["strategy_data_dir"],
             class_name=self.subaccount_config["strategy"]
         )
         self.strategy = strategy
@@ -68,7 +68,7 @@ class SubaccountItem():
         self.exchange = exchange
 
         dataprovider = DataProvider(
-            search_path=os.path.join(self.config["user_data_dir"], self.config["data_data_dir"]),
+            search_path=self.config["data_data_dir"],
             file_lock=self.file_lock,
         )
         dataprovider.set_pairs(self.subaccount_config)

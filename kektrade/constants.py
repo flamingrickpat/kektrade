@@ -24,12 +24,17 @@ CONFIG_SCHEMA = \
             "strategy_data_dir": {
                 "type": "string",
                 "description": "path to folder where custom strategies are saved",
-                "default": "strategies"
+                "default": "user_data/strategies"
             },
             "data_data_dir": {
                 "type": "string",
                 "description": "path to folder where candles are cached",
-                "default": "data"
+                "default": "user_data/data"
+            },
+            "history_data_dir": {
+                "type": "string",
+                "description": "path to folder where run history with logs and plots are saved",
+                "default": "user_data/history"
             },
             "log_level": {
                 "type": "string",

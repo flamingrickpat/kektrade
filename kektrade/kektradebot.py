@@ -49,7 +49,7 @@ class KektradeBot():
 
         for subaccount in self.config["subaccounts"]:
             (module_path, _) = StrategyResolver.load_strategy(
-                search_path=os.path.join(self.config["user_data_dir"], self.config["strategy_data_dir"]),
+                search_path=self.config["strategy_data_dir"],
                 class_name=subaccount["strategy"]
             )
             utils.copy_file_to_folder(module_path, self.run_settings.run_dir)
