@@ -13,12 +13,11 @@ class IStrategy(ABC):
     # Count of candles the strategy requires before producing valid signals
     startup_candle_count: int = 0
 
-    @abstractmethod
     def populate_parameters(self) -> Dict[str, List[Any]]:
         """
         Define the optimizable parameters this strategy has.
         """
-        pass
+        return {}
 
     @abstractmethod
     def populate_variables(self, variables: Dict[str, Any]) -> None:

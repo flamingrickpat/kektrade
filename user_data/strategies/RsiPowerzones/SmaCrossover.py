@@ -36,7 +36,7 @@ class SmaCrossover(IStrategy):
             c = -m - exchange.get_position().contracts
             exchange.open_order("", OrderType.MARKET, contracts=c)
 
-    def populate_indicators(self):
+    def get_indicators(self):
         return [
             {
                 "plot": True,
