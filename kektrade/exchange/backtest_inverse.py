@@ -575,8 +575,15 @@ class BacktestInverse(Backtest):
         if self._position_open():
             rate = self.df.at[self.df_position, "funding_rate"]
             if (not np.isnan(rate) and rate != 0):
-                position_value = self.position.contracts / self.get_close()
-                funding_fee = position_value * rate
+                position_value = abs(self.position.contracts) / self.get_close()
+                funding_fee = abs(position_value * rate)
+
+                if self.position.contracts > 0:
+                    if rate > 0:
+                        funding_fee = funding_fee * -1
+                elif self.position.contracts < 0:
+                    if rate < 0:
+                        funding_fee = funding_fee * -1
 
                 execution = Execution()
                 execution.pair_id = self.pair_id
@@ -727,6 +734,22 @@ class BacktestInverse(Backtest):
         self.orders_open.remove(order)
 
 
+    def _get_order_fee_cost(self, order: Order) -> float:
+        return abs(order.contracts / order.price) * order.fee_rate
+
+    def _get_order_rpnl_long(self, order: Order, price: float) -> float:
+        return abs(order.contracts) * ((1 / self.position.price) - (1 / price))
+
+    def _get_order_rpnl_short(self, order: Order, price: float) -> float:
+        return abs(order.contracts) * ((1 / price) - (1 / self.position.price))
+
+    def _get_order_position_aep(self, order: Order) -> float:
+        return (self.position.contracts + order.contracts) / ((self.position.contracts / self.position.price) +
+                                                              (order.contracts / order.price))
+
+        #return ((order.contracts * order.price) + (self.position.contracts * self.position.price)) / \
+        #                        (order.contracts + self.position.contracts)
+
     def _execute_order(self, order: Order) -> None:
         self.orders_closed.append(order)
         self.orders_open.remove(order)
@@ -750,10 +773,10 @@ class BacktestInverse(Backtest):
             #execution.symbol = self.position.symbol
             execution.price = order_tmp.price
             execution.contracts = order_tmp.contracts
-            execution.cost = self._get_order_initial_margin(order)
+            execution.cost = self._get_order_initial_margin(order_tmp)
             execution.reduce_or_expand = ReduceExpandType.EXPAND
             execution.fee_rate = order_tmp.fee_rate
-            execution.fee_cost = abs(order_tmp.contracts / order_tmp.price) * order_tmp.fee_rate
+            execution.fee_cost = self._get_order_fee_cost(order_tmp)
             execution.taker_or_maker = order.taker_or_maker
             self.session.add(execution)
 
@@ -761,8 +784,7 @@ class BacktestInverse(Backtest):
                 self.position.price = order_tmp.price
                 self.position.contracts = order_tmp.contracts
             else:
-                self.position.price = ((order_tmp.contracts * order_tmp.price) + (self.position.contracts * self.position.price)) / \
-                                      (order_tmp.contracts + self.position.contracts)
+                self.position.price = self._get_aep(order)
                 self.position.contracts += order_tmp.contracts
 
             self.wallet.total_rpnl += execution.fee_cost
@@ -783,14 +805,14 @@ class BacktestInverse(Backtest):
             execution.cost = 0
             execution.reduce_or_expand = ReduceExpandType.REDUCE
             execution.fee_rate = order_tmp.fee_rate
-            execution.fee_cost = abs(order_tmp.contracts / order_tmp.price) * order_tmp.fee_rate
+            execution.fee_cost = self._get_order_fee_cost(order_tmp)
             execution.taker_or_maker = order.taker_or_maker
 
             price = order_tmp.price if order.order_type == OrderType.LIMIT else self.get_open()
             if self.position.contracts > 0:
-                rpnl = abs(order_tmp.contracts) * ((1 / self.position.price) - (1 / price))
+                rpnl = self._get_order_rpnl_long(order_tmp, price)
             else:
-                rpnl = abs(order_tmp.contracts) * ((1 / price) - (1 / self.position.price))
+                rpnl = self._get_order_rpnl_short(order_tmp, price)
 
             execution.cost = rpnl
             self.session.add(execution)

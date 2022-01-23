@@ -43,12 +43,15 @@ Kektrade doesn't take any command line parameters. Since there is only a single 
 
 There are multiple exchanges available in Kektrade:
 
-* **Bybit Perpetual**
-* **Bybit Inverse**
-* **FTX Perpetual**
-* **Backtest Perpetual** 
-* **Backtest Perpetual Realistic**
-
+* **Bybit Linear (Planned)**
+* **Bybit Inverse (Planned)**
+* **FTX Linear (Planned)**
+* **Binance Linear (Planned)**
+* **Binance Inverse (Planned)**
+* **Backtest Linear** 
+* **Backtest Linear Dryrun**
+* **Backtest Inverse** 
+* **Backtest Inverse Dryrun**
 
 
 
