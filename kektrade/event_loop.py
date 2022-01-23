@@ -92,7 +92,7 @@ class EventLoop():
             parameters_indicators = self._optimize_get_parameters_indicators()
             subaccount.exchange.before_tick(index)
 
-            if parameter:
+            if parameter or not self._optimization_enabled():
                 df = self._get_main_df()
                 df = self._populate_indicators(subaccount, df, metadata, parameters_indicators)
 
@@ -333,6 +333,9 @@ class EventLoop():
                 else:
                     self.optimizer.start(train_period, test_period, callback=self._optimize_finished)
 
+    def _optimization_enabled(self) -> bool:
+        return self.subaccount.config["optimization"]["enabled"]
+
     def _optimization_necassary(self) -> bool:
         """
         Check if an optimization process is necassary.
@@ -340,6 +343,16 @@ class EventLoop():
         The days_test parameter from the config indicates how long the parameters for out-of-sample execution is valid.
         :return: true if optimization is necassary
         """
+        if self.subaccount.config["optimization"]["enabled"]:
+            if len(self.subaccount.strategy.populate_parameters()) == 0:
+                logger.error("can't optimize without parameters")
+                exit(1)
+        else:
+            if len(self.subaccount.strategy.populate_parameters()) > 0:
+                logger.error("strategy has to be optimized")
+                exit(1)
+            return False
+
         df = self._get_main_df()
         index = self._get_index()
         date = utils.pdts_to_pydt(df.at[index, "date"])
