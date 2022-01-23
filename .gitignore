@@ -132,7 +132,7 @@ tests/
 
 .idea
 
-./config.json
+config.json
 
 user_data/history
 user_data/data

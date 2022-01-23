@@ -45,9 +45,9 @@ def main(args: List[str]) -> None:
     db_path = Path(os.path.join(run_dir, config["metastrategy_id"] + ".db"))
 
     if run_continue:
-        logger.info(f"Starting kektrade with new RunID: {run_id}")
+        logger.info(f"Continuing kektrade with existing RunID: {run_id}")
     else:
-        logger.info(f"Starting kektrade with existing RunID: {run_id}")
+        logger.info(f"Starting kektrade with RunID: {run_id}")
 
     run_settings = RunSettings(
         run_id=run_id,
