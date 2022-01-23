@@ -744,7 +744,10 @@ class BacktestInverse(Backtest):
         return abs(order.contracts) * ((1 / price) - (1 / self.position.price))
 
     def _get_order_position_aep(self, order: Order) -> float:
-        return (self.position.contracts + order.contracts) / ((self.position.contracts / self.position.price) +
+        if self.position.contracts == 0:
+            return order.price
+        else:
+            return (self.position.contracts + order.contracts) / ((self.position.contracts / self.position.price) +
                                                               (order.contracts / order.price))
 
         #return ((order.contracts * order.price) + (self.position.contracts * self.position.price)) / \
@@ -784,7 +787,7 @@ class BacktestInverse(Backtest):
                 self.position.price = order_tmp.price
                 self.position.contracts = order_tmp.contracts
             else:
-                self.position.price = self._get_aep(order)
+                self.position.price = self._get_order_position_aep(order)
                 self.position.contracts += order_tmp.contracts
 
             self.wallet.total_rpnl += execution.fee_cost

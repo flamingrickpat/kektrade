@@ -142,7 +142,7 @@ class EventLoop():
         pair.datasource = self.subaccount.dataprovider.main_pair.datasource.value
         pair.subaccount_id = subaccount.id
         pair.optimize_configuration_id = self.optimize_id
-        pair.fl_main = True
+        pair.fl_main = not self.subaccount.is_optimization()
         session.add(pair)
         session.commit()
 

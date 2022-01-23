@@ -239,5 +239,8 @@ class BacktestLinear(BacktestInverse):
         return abs(order.contracts) * (order.price - self.get_open())
 
     def _get_order_position_aep(self, order: Order) -> float:
-        return ((order.contracts * order.price) + (self.position.contracts * self.position.price)) / \
+        if self.position.contracts == 0:
+            return order.price
+        else:
+            return ((order.contracts * order.price) + (self.position.contracts * self.position.price)) / \
                                 (order.contracts + self.position.contracts)
