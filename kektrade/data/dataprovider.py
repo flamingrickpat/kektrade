@@ -180,7 +180,14 @@ class DataProvider():
         df = DataProvider._remove_duplicates(df)
 
         path.parent.mkdir(parents=True, exist_ok=True)
-        df.to_csv(path)
+
+        df_orig = DataProvider._read_ohlcv_csv(path)
+
+        if len(df_orig.index) > len(df.index):
+            raise Exception("new df shorter")
+
+        if len(df_orig.index) != len(df.index):
+            df.to_csv(path)
 
 
     @staticmethod
