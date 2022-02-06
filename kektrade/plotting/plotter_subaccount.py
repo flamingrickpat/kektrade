@@ -40,7 +40,7 @@ class PlotterSubaccount(Plotter):
 
         conn = session.bind
 
-        query = select_classtype(Order)
+        query = select_classtype(Order).where(Order.price != 0)
         data_order = pd.read_sql(query, con=conn)
 
         query = select_classtype(Position)
@@ -65,13 +65,20 @@ class PlotterSubaccount(Plotter):
         self._plot_position(fig, data_position)
         self._plot_wallet(fig, data_wallet)
 
-        reduce = data_execution[(data_execution["reduce_or_expand"] == ReduceExpandType.REDUCE) &
-                                (data_execution["execution_type"] == ExecutionType.TRADE)].copy()
+        reduce_profit = data_execution[(data_execution["reduce_or_expand"] == ReduceExpandType.REDUCE) &
+                                (data_execution["execution_type"] == ExecutionType.TRADE) &
+                                (data_execution["cost"] > 0)].copy()
+
+        reduce_loss = data_execution[(data_execution["reduce_or_expand"] == ReduceExpandType.REDUCE) &
+                                (data_execution["execution_type"] == ExecutionType.TRADE) &
+                                (data_execution["cost"] < 0)].copy()
+
         expand = data_execution[(data_execution["reduce_or_expand"] == ReduceExpandType.EXPAND) &
                                 (data_execution["execution_type"] == ExecutionType.TRADE)].copy()
         liquidation = data_execution[data_execution["execution_type"] == ExecutionType.LIQUIDATION].copy()
         funding = data_execution[data_execution["execution_type"] == ExecutionType.FUNDING].copy()
-        self._plot_execution(fig, reduce, "Execution Reduce")
+        self._plot_execution(fig, reduce_profit, "Execution Reduce Profit")
+        self._plot_execution(fig, reduce_loss, "Execution Reduce Loss")
         self._plot_execution(fig, expand, "Execution Expand")
         self._plot_execution(fig, liquidation, "Execution Liquidation")
         self._plot_execution(fig, funding, "Execution Funding")
