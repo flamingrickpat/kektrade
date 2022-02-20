@@ -18,28 +18,40 @@ class Sma(IStrategy):
         pass
 
     def populate_indicators(self, dataframe: DataFrame, metadata: Dict[str, Any], parameters: Dict[str, Any]) -> DataFrame:
-        dataframe["sma_big"] = talib.SMA(dataframe.close, timeperiod=10)
+        dataframe["sma_big"] = talib.SMA(dataframe.close, timeperiod=100)
+        dataframe["sma_small"] = talib.SMA(dataframe.close, timeperiod=50)
         return dataframe
 
     def tick(self, dataframe: DataFrame, index: int, metadata: Dict[str, Any], parameter: Dict[str, Any], variables: Dict[str, Any], exchange: IExchange) -> None:
         df = dataframe
         i = index
 
-        m = 1
+        m = exchange.get_contracts_percentage(0.1)
 
         if i > 10:
-            if df.at[i, "sma_big"] > df.at[i - 1, "sma_big"]:
-                c = m
-                exchange.open_order("", OrderType.MARKET, contracts=c)
-            elif df.at[i, "sma_big"] < df.at[i - 1, "sma_big"]:
-                c = -m
-                exchange.open_order("", OrderType.MARKET, contracts=c)
+            if (parameter["side"] == "long"):
+                if df.at[i, "sma_small"] > df.at[i, "sma_big"]:
+                    c = m
+                    exchange.open_order("", OrderType.MARKET, contracts=c)
+                elif df.at[i, "sma_small"] < df.at[i, "sma_big"]:
+                    c = -exchange.get_position().contracts
+                    if c != 0:
+                        exchange.open_order("", OrderType.MARKET, contracts=c)
+
+            elif (parameter["side"] == "short"):
+                if df.at[i, "sma_small"] > df.at[i, "sma_big"]:
+                    c = -exchange.get_position().contracts
+                    if c != 0:
+                        exchange.open_order("", OrderType.MARKET, contracts=c)
+                elif df.at[i, "sma_small"] < df.at[i, "sma_big"]:
+                    c = -m
+                    exchange.open_order("", OrderType.MARKET, contracts=c)
 
     def get_indicators(self):
         return [
             {
                 "plot": True,
-                "name": "sma_big",
+                "name": "sma",
                 "overlay": True,
                 "scatter": False,
                 "color": "red"
