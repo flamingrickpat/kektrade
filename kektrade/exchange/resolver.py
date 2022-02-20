@@ -1,5 +1,6 @@
 from kektrade.exceptions import UnsupportedExchange
 from kektrade.exchange.backtest_inverse import BacktestInverse
+from kektrade.exchange.backtest_linear import BacktestLinear
 from kektrade.misc import EnumString
 
 class ExchangeEndpoint(EnumString):
@@ -8,7 +9,7 @@ class ExchangeEndpoint(EnumString):
     BinanceFuturesCoin = 'binance_futures_coin'
     BybitFutures = 'bybit_futures'
     BybitFuturesInverse = 'bybit_futures_inverse'
-    Backtest = 'backtest'
+    BacktestLinear = 'backtest_linear'
     BacktestInverse = 'backtest_inverse'
 
 class ExchangeResolver():
@@ -17,6 +18,8 @@ class ExchangeResolver():
         exchange = ExchangeEndpoint.from_str(exchange_name)
         if exchange == ExchangeEndpoint.BacktestInverse:
             return BacktestInverse()
+        if exchange == ExchangeEndpoint.BacktestLinear:
+            return BacktestLinear()
         else:
             raise UnsupportedExchange()
 
