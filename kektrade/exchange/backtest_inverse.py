@@ -50,18 +50,14 @@ class BacktestInverse(Backtest):
         self.df = dataframe
 
     def init_exchange(self) -> None:
-        self.wallet.pair_id = self.pair_id
         self.wallet.subaccount_id = self.subaccount_id
-        self.wallet.optimize_id = self.optimize_id
         self.wallet.deposit = self.initial_deposit
         self.wallet.total_rpnl = 0
         self.wallet.account_balance = 0
         self.wallet.margin_balance = 0
         self.wallet.available_balance = 0
 
-        self.position.pair_id = self.pair_id
         self.position.subaccount_id = self.subaccount_id
-        self.position.optimize_id = self.optimize_id
         self.position.price = 0
         self.position.contracts = 0
 
@@ -125,9 +121,7 @@ class BacktestInverse(Backtest):
 
         order = Order()
         order.order_id = self._get_order_id()
-        order.pair_id = self.pair_id
         order.subaccount_id = self.subaccount_id
-        order.optimize_id = self.optimize_id
         order.client_order_id = ""
         order.datetime = self._get_date()
         order.timestamp = self._get_timestamp()
@@ -159,12 +153,12 @@ class BacktestInverse(Backtest):
         self.session.add(order)
 
         if not self._check_order_post_only(order):
-            logger.warning(f"order {order.id} is post-only and instantly canceled")
+            logger.warning(f"order {order.order_id} is post-only and instantly canceled")
             self.orders_canceled.append(order)
             return None
 
         if not self._check_order_enough_balance(order):
-            logger.warning(f"not enough balance for order {order.id}")
+            logger.warning(f"not enough balance for order {order.order_id}")
             self.orders_canceled.append(order)
             return None
 
@@ -173,7 +167,7 @@ class BacktestInverse(Backtest):
 
     def cancel_order(self, id: str) -> Union[None, Order]:
         for order in self.orders_open:
-            if order.id == id:
+            if order.order_id == id:
                 order.status = OrderStatus.CANCELED
                 return order
 
@@ -183,7 +177,7 @@ class BacktestInverse(Backtest):
 
     def set_order_price(self, id: str, price: float) -> Union[None, Order]:
         for order in self.orders_open:
-            if order.id == id:
+            if order.order_id == id:
                 order.price = price
                 return order
 
@@ -194,9 +188,11 @@ class BacktestInverse(Backtest):
         return self.wallet
 
     def get_contracts_percentage(self, percentage: float) -> float:
-        order_cost = self._get_account_balance() * percentage
-        contracts = (order_cost * 1e8) / (1e8 / self.get_open())
-        return int(contracts * self.position.leverage)
+        price = self.get_close()
+        price_one_contract = 1 / (price * self.position.leverage)
+        available = self._get_account_balance() * (percentage / 100)
+        contracts = available / price_one_contract
+        return int(contracts)
 
     def close_position(self):
         if self.get_position().contracts != 0:
@@ -586,9 +582,7 @@ class BacktestInverse(Backtest):
                         funding_fee = funding_fee * -1
 
                 execution = Execution()
-                execution.pair_id = self.pair_id
                 execution.subaccount_id = self.subaccount_id
-                execution.optimize_id = self.optimize_id
                 execution.execution_type = ExecutionType.FUNDING
                 execution.execution_id = self._get_order_id()
                 execution.order_id = 0
@@ -628,9 +622,7 @@ class BacktestInverse(Backtest):
 
                 if liquidated:
                     execution = Execution()
-                    execution.pair_id = self.pair_id
                     execution.subaccount_id = self.subaccount_id
-                    execution.optimize_id = self.optimize_id
                     execution.execution_type = ExecutionType.LIQUIDATION
                     execution.execution_id = self._get_order_id()
                     execution.order_id = 0
@@ -685,15 +677,15 @@ class BacktestInverse(Backtest):
                 cancel: bool = False
 
                 if not self._check_order_enough_balance(order):
-                    logger.info(f"not enough balance for order {order.id}")
+                    logger.info(f"not enough balance for order {order.order_id}")
                     cancel = True
 
                 if not self._check_order_reduce_only(order):
-                    logger.info(f"reduce only order not possible for order {order.id}")
+                    logger.info(f"reduce only order not possible for order {order.order_id}")
                     cancel = True
 
                 if not self._check_order_lifetime(order):
-                    logger.info(f"order {order.id} is expired and will be canceled")
+                    logger.info(f"order {order.order_id} is expired and will be canceled")
                     cancel = True
 
                 if cancel:
@@ -762,9 +754,7 @@ class BacktestInverse(Backtest):
 
         def expand(order_tmp: Order):
             execution = Execution()
-            execution.pair_id = self.pair_id
             execution.subaccount_id = self.subaccount_id
-            execution.optimize_id = self.optimize_id
             execution.execution_type = ExecutionType.TRADE
             execution.execution_id = self._get_order_id()
             execution.order_id = order_tmp.order_id
@@ -791,9 +781,7 @@ class BacktestInverse(Backtest):
 
         def reduce(order_tmp: Order):
             execution = Execution()
-            execution.pair_id = self.pair_id
             execution.subaccount_id = self.subaccount_id
-            execution.optimize_id = self.optimize_id
             execution.execution_type = ExecutionType.TRADE
             execution.execution_id = self._get_order_id()
             execution.order_id = order_tmp.order_id
