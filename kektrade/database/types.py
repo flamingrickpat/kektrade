@@ -118,6 +118,7 @@ class Subaccount(Base):
     parameter = Column(String)
     is_optimize = Column(Boolean)
     parent_subaccount = Column(Integer)
+    optimize_id = Column(Integer)
     start = Column(DateTime)
     end = Column(DateTime)
 
@@ -133,20 +134,15 @@ class Pair(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     subaccount_id = Column(Integer)
-    optimize_id = Column(Integer)
     pair = Column(String)
     timeframe = Column(Integer)
     datasource = Column(String)
-    fl_main = Column(Boolean)
 
 class Wallet(Base):
     __tablename__ = "wallet"
 
     id = Column(Integer, primary_key=True, autoincrement=True)  # PK
     subaccount_id = Column(Integer)
-    optimize_id = Column(Integer)
-    pair_id = Column(Integer)
-
     datetime = Column(DateTime) # ISO8601 representation of the unix time above
     timestamp = Column(Integer) # integer unix time since 1st Jan 1970 in milliseconds
     #current_datetime = Column(DateTime) # updates every tick, for history and plotting
@@ -172,8 +168,6 @@ class Position(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)  # PK
 
     subaccount_id = Column(Integer)
-    optimize_id = Column(Integer)
-    pair_id = Column(Integer)
 
     position_id = Column(String) # string, position id to reference the position, similar to an order id
     #symbol = Column(String) # uppercase string literal of a pair of currencies
@@ -211,9 +205,6 @@ class Order(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True) # PK
     subaccount_id = Column(Integer)
-    optimize_id = Column(Integer)
-    pair_id = Column(Integer)
-
     order_id = Column(String) # order ID
     client_order_id = Column(String) # user defined order ID
     insert_state = Column(Float) # for backtest analysis, only true if just created
@@ -252,9 +243,6 @@ class Execution(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)  # PK
     subaccount_id = Column(Integer)
-    optimize_id = Column(Integer)
-    pair_id = Column(Integer)
-
     execution_id = Column(String)  # string ID
     datetime = Column(DateTime)  # ISO8601 datetime of 'timestamp' with milliseconds
     timestamp = Column(Integer)  # order placing/opening Unix timestamp in milliseconds

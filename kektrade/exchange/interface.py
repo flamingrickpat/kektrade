@@ -19,8 +19,6 @@ class IExchange(ABC):
         self.api_secret: str = ""
 
         self.subaccount_id: int = 0
-        self.optimize_id: int = 0
-        self.pair_id: int = 0
 
         self.backtest_start: DateTime = ""
         self.backtest_end: DateTime = ""

@@ -55,7 +55,7 @@ class PlotterSubaccount(Plotter):
         query = (
             f"select distinct * from ticker t "
             f"join pair p on t.pair_id = p.id "
-            f"where p.subaccount_id = {subaccount_id} and t.subaccount_id = {subaccount_id}"
+            f"where p.subaccount_id = {subaccount_id}"
         )
         data_ticker = pd.read_sql(query, con=conn)
 
