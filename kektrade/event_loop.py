@@ -8,6 +8,7 @@ import copy
 
 from pandas import DataFrame
 import tqdm
+from sqlalchemy.exc import OperationalError
 
 from kektrade.data.dataprovider import DatetimePeriod
 from kektrade.exchange import Backtest
@@ -47,7 +48,7 @@ class EventLoop():
         self.optimize_id: int = 0
         self.pair_id: int = 0
 
-        self.optimized_parameter: Dict[str, Any] = None
+        self.optimized_parameter: Dict[str, Any] = {}
         self.recalculate_inidcators: bool = True
 
     def start(self) -> int:
@@ -88,7 +89,8 @@ class EventLoop():
             self._load_new_candles()
 
             self._optimize_start()
-            parameter = self._optimize_get_parameter()
+            parameter = self.subaccount.subaccount_config["parameters"]
+            parameter.update(self._optimize_get_parameter())
             parameters_indicators = self._optimize_get_parameters_indicators()
             subaccount.exchange.before_tick(index)
 
@@ -129,6 +131,7 @@ class EventLoop():
         subaccount.strategy = self.subaccount.subaccount_config["strategy"]
         subaccount.parameter = str(self.subaccount.parameter)
         subaccount.parent_subaccount_id = self.subaccount.parent_subaccount_id
+        subaccount.optimize_id = self.optimize_id
         subaccount.start = self.subaccount.start
         subaccount.end = self.subaccount.end
         session.add(subaccount)
@@ -141,8 +144,6 @@ class EventLoop():
         pair.timeframe = self.subaccount.dataprovider.main_pair.timeframe
         pair.datasource = self.subaccount.dataprovider.main_pair.datasource.value
         pair.subaccount_id = subaccount.id
-        pair.optimize_configuration_id = self.optimize_id
-        pair.fl_main = not self.subaccount.is_optimization()
         session.add(pair)
         session.commit()
 
@@ -227,8 +228,7 @@ class EventLoop():
         if self.subaccount.is_backtest() and self._get_index() == 0:
             self.subaccount.exchange.set_dataframe(self._get_main_df())
         self.subaccount.exchange.subaccount_id = self.subaccount_id
-        self.subaccount.exchange.optimize_id = self.optimize_id
-        self.subaccount.exchange.pair_id = self.pair_id
+        self.subaccount.exchange.initial_deposit = self.subaccount.subaccount_config["exchange_parameters"]["initial_deposit"]
         self.subaccount.exchange.init_exchange()
 
     def _init_progress(self) -> None:
@@ -273,10 +273,15 @@ class EventLoop():
         if self.recalculate_inidcators:
             df = subaccount.strategy.populate_indicators(dataframe=df, metadata=metadata, parameters=parameters)
             utils.create_missing_columns(self.subaccount.run_settings.db_path, "ticker", df)
-            df["subaccount_id"] = self.subaccount_id
             df["pair_id"] = self.pair_id
-            df["optimize_id"] = self.optimize_id
-            df.to_sql(name="ticker", con=get_engine(self.subaccount.run_settings.db_path), if_exists='append')
+
+            try:
+                con = get_engine(self.subaccount.run_settings.db_path)
+                con.execute(f"delete from ticker where pair_id = {self.pair_id}")
+            except OperationalError:
+                pass
+
+            df.to_sql(name="ticker", con=con, if_exists='append')
             self.recalculate_inidcators = False
 
         return df
