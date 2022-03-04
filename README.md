@@ -54,8 +54,9 @@ There are multiple exchanges available in Kektrade:
 * **Backtest Inverse Dryrun**
 
 
+### Plotting
 
-
+![Plot example](docs/plot1.png)
 
 
 ### Strategy
