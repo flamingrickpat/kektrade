@@ -6,6 +6,7 @@ from kektrade.exchange.interface import IExchange
 
 logger = logging.getLogger(__name__)
 
+
 class Backtest(IExchange):
     def __init__(self):
         super(Backtest, self).__init__()
@@ -24,3 +25,5 @@ class Backtest(IExchange):
 
         self.maker_fee: float = 0.00025
         self.taker_fee: float = -0.00075
+
+        self.contract_multiplier: int = 100

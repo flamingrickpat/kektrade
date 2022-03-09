@@ -111,7 +111,8 @@ class EventLoop():
             pbar.close()
 
         self.subaccount.exchange.finalize_exchange()
-        self._plot_subaccount()
+        if self.subaccount.config["plotting"]["enabled"]:
+            self._plot_subaccount()
         self._free_progress()
 
         if not self.subaccount.is_optimization():

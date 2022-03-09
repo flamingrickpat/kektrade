@@ -189,10 +189,13 @@ class BacktestInverse(Backtest):
 
     def get_contracts_percentage(self, percentage: float) -> float:
         price = self.get_close()
-        price_one_contract = 1 / (price * self.position.leverage)
+        tmp = Order()
+        tmp.price = price
+        tmp.contracts = 1
+        price_one_contract = self._get_order_initial_margin(tmp)
         available = self._get_account_balance() * (percentage / 100)
         contracts = available / price_one_contract
-        return int(contracts)
+        return contracts
 
     def close_position(self):
         if self.get_position().contracts != 0:
@@ -309,7 +312,7 @@ class BacktestInverse(Backtest):
         :return: initial margin
         """
         price = order.price if order.price > 0 else self.get_close()
-        return abs(order.contracts) / (price * self.position.leverage)
+        return abs(order.contracts) / (self.leverage * price)
 
     def _get_order_cost(self, order) -> float:
         """

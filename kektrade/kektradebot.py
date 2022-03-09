@@ -48,17 +48,18 @@ class KektradeBot():
         """
 
         for subaccount in self.config["subaccounts"]:
-            (module_path, _) = StrategyResolver.load_strategy(
-                search_path=self.config["strategy_data_dir"],
-                class_name=subaccount["strategy"]
-            )
-            utils.copy_file_to_folder(module_path, self.run_settings.run_dir)
+            if subaccount["enabled"]:
+                (module_path, _) = StrategyResolver.load_strategy(
+                    search_path=self.config["strategy_data_dir"],
+                    class_name=subaccount["strategy"]
+                )
+                utils.copy_file_to_folder(module_path, self.run_settings.run_dir)
 
-            start = utils.parse_datetime_string(self.config["backtest_start"])
-            end = utils.parse_datetime_string(self.config["backtest_end"])
+                start = utils.parse_datetime_string(self.config["backtest_start"])
+                end = utils.parse_datetime_string(self.config["backtest_end"])
 
-            sa = SubaccountItem(self.config, subaccount, self.run_settings, self.file_lock, start, end)
-            self.subaccounts.append(sa)
+                sa = SubaccountItem(self.config, subaccount, self.run_settings, self.file_lock, start, end)
+                self.subaccounts.append(sa)
 
 
     def setup_plotter(self):

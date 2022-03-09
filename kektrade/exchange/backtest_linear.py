@@ -34,7 +34,7 @@ class BacktestLinear(BacktestInverse):
         :return: initial margin
         """
         price = order.price if order.price > 0 else self.get_close()
-        return abs(order.contracts * price) / self.position.leverage
+        return abs(order.contracts * price) / self.leverage
 
     def _get_order_cost(self, order) -> float:
         """
@@ -210,9 +210,7 @@ class BacktestLinear(BacktestInverse):
                         funding_fee = funding_fee * -1
 
                 execution = Execution()
-                execution.pair_id = self.pair_id
                 execution.subaccount_id = self.subaccount_id
-                execution.optimize_id = self.optimize_id
                 execution.execution_type = ExecutionType.FUNDING
                 execution.execution_id = self._get_order_id()
                 execution.order_id = 0
@@ -233,10 +231,10 @@ class BacktestLinear(BacktestInverse):
         return abs(order.contracts * order.price) * order.fee_rate
 
     def _get_order_rpnl_long(self, order: Order, price: float) -> float:
-        return abs(order.contracts) * (self.get_open() - order.price)
+        return abs(order.contracts) * (price - self.position.price)
 
     def _get_order_rpnl_short(self, order: Order, price: float) -> float:
-        return abs(order.contracts) * (order.price - self.get_open())
+        return abs(order.contracts) * (self.position.price - price)
 
     def _get_order_position_aep(self, order: Order) -> float:
         if self.position.contracts == 0:

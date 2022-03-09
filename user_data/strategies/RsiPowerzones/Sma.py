@@ -26,11 +26,11 @@ class Sma(IStrategy):
         df = dataframe
         i = index
 
-        m = exchange.get_contracts_percentage(0.1)
+        m = exchange.get_contracts_percentage(1)
 
         if i > 10:
             if (parameter["side"] == "long"):
-                if df.at[i, "sma_small"] > df.at[i, "sma_big"]:
+                if df.at[i, "sma_small"] > df.at[i, "sma_big"] and df.at[i - 1, "sma_small"] < df.at[i - 1, "sma_big"]:
                     c = m
                     exchange.open_order("", OrderType.MARKET, contracts=c)
                 elif df.at[i, "sma_small"] < df.at[i, "sma_big"]:
@@ -43,7 +43,7 @@ class Sma(IStrategy):
                     c = -exchange.get_position().contracts
                     if c != 0:
                         exchange.open_order("", OrderType.MARKET, contracts=c)
-                elif df.at[i, "sma_small"] < df.at[i, "sma_big"]:
+                elif df.at[i, "sma_small"] < df.at[i, "sma_big"] and df.at[i - 1, "sma_small"] > df.at[i - 1, "sma_big"]:
                     c = -m
                     exchange.open_order("", OrderType.MARKET, contracts=c)
 
