@@ -48,10 +48,8 @@ There are multiple exchanges available in Kektrade:
 * **FTX Linear (Planned)**
 * **Binance Linear (Planned)**
 * **Binance Inverse (Planned)**
-* **Backtest Linear** 
-* **Backtest Linear Dryrun**
-* **Backtest Inverse** 
-* **Backtest Inverse Dryrun**
+* **Bybit Backtest Linear** 
+* **Bybit Backtest Inverse** 
 
 
 ### Plotting

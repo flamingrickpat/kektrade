@@ -53,28 +53,33 @@ def load_ticker(pair: PairDataInfo, data_range: DatetimePeriod) -> DataFrame:
         if data[i][0] > time.time_ns():
             del data[i]
 
-
-    funding_since = data[0][0]
-    funding_end = data[-1][0]
-    funding = []
-    while True:
-        tmp = _fetch_historical_funding_rates(ccxt_exchange, pair.pair, since=funding_since, limit=1000)
-        funding += tmp
-        ft = int(tmp[-1]["fundingTime"])
-        funding_since = ft
-        if len(tmp) < 1000 or ft > funding_end:
-            break
-
-    last_start = 0
-    for i in range(len(data)):
-        for j in range(last_start, len(funding)):
-            ft = int(funding[j]["fundingTime"])
-            if ft == data[i][0]:
-                last_start = j
-                data[i].append(float(funding[j]["fundingRate"]))
+    if pair.datasource in [ExchangeEndpoint.BinanceSpot, ExchangeEndpoint.BinanceFutures,
+                      ExchangeEndpoint.BinanceFuturesCoin]:
+        funding_since = data[0][0]
+        funding_end = data[-1][0]
+        funding = []
+        while True:
+            tmp = _fetch_historical_funding_rates(ccxt_exchange, pair.pair, since=funding_since, limit=1000)
+            funding += tmp
+            ft = int(tmp[-1]["fundingTime"])
+            funding_since = ft
+            if len(tmp) < 1000 or ft > funding_end:
                 break
-            elif ft > data[i][0]:
-                break
+
+        last_start = 0
+        for i in range(len(data)):
+            for j in range(last_start, len(funding)):
+                ft = int(funding[j]["fundingTime"])
+                if ft == data[i][0]:
+                    last_start = j
+                    data[i].append(float(funding[j]["fundingRate"]))
+                    break
+                elif ft > data[i][0]:
+                    break
+    else:
+        logger.warning("exchange doesn't provice funding data")
+        for i in range(len(data)):
+            data[i].append(0.0)
 
     return Converter.convert_ohlcv_list_to_dataframe(data)
 
@@ -114,7 +119,7 @@ def _get_ccxt_object(datasource: ExchangeEndpoint, **kwargs) -> Tuple[ccxt.Excha
             }
 
     elif datasource in [ExchangeEndpoint.BybitFutures, ExchangeEndpoint.BybitFuturesInverse]:
-        raise Exception("bybit not supported since there is no funding history api endpoint")
+        # raise Exception("bybit not supported since there is no funding history api endpoint")
         ccxt_exchange = ccxt.bybit(auth)
         package_length = 200
         # ccxt_exchange.parse_ohlcv = parse_ohlcv_fixed
