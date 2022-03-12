@@ -51,9 +51,16 @@ class Sma(IStrategy):
         return [
             {
                 "plot": True,
-                "name": "sma",
+                "name": "sma_big",
                 "overlay": True,
                 "scatter": False,
                 "color": "red"
+            },
+            {
+                "plot": True,
+                "name": "sma_small",
+                "overlay": True,
+                "scatter": False,
+                "color": "blue"
             }
         ]
