@@ -158,7 +158,7 @@ class BacktestInverse(Backtest):
             return None
 
         if not self._check_order_enough_balance(order):
-            logger.warning(f"not enough balance for order {order.order_id}")
+            #logger.warning(f"not enough balance for order {order.order_id}")
             self.orders_canceled.append(order)
             return None
 
@@ -679,9 +679,11 @@ class BacktestInverse(Backtest):
             elif order.status == OrderStatus.OPEN:
                 cancel: bool = False
 
+                self.orders_open.remove(order)
                 if not self._check_order_enough_balance(order):
-                    logger.info(f"not enough balance for order {order.order_id}")
+                    #logger.info(f"not enough balance for order {order.order_id}")
                     cancel = True
+                self.orders_open.append(order)
 
                 if not self._check_order_reduce_only(order):
                     logger.info(f"reduce only order not possible for order {order.order_id}")
