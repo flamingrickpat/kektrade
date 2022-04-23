@@ -12,7 +12,7 @@ from kektrade.exceptions import InvalidRunIdException
 from kektrade.kektradebot import KektradeBot
 from kektrade.logger import setup_logging_default, setup_logging_config
 
-logger = logging.getLogger('freqtrade')
+logger = logging.getLogger('kektrade')
 
 def main(args: List[str]) -> None:
     """

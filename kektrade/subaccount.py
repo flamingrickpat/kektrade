@@ -102,7 +102,7 @@ class SubaccountItem():
         :param subaccount: subaccount
         :return: true if the exchange is a backtest exchange
         """
-        return isinstance(self.exchange, Backtest) or issubclass(self.exchange.__class__, Backtest)
+        return self.exchange.is_backtest()
 
     def is_optimization(self) -> bool:
         """

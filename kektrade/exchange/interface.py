@@ -212,4 +212,9 @@ class IExchange(ABC):
         """
         return 0
 
-
+    @abstractmethod
+    def is_backtest(self) -> bool:
+        """
+        Return True if backtest.
+        """
+        return True

@@ -81,12 +81,11 @@ class EventLoop():
         self._init_optimize()
         self._init_progress()
         while self._active():
-            index = self._get_index()
-
             if self.subaccount.is_backtest() and not self.subaccount.is_optimization():
                 pbar.update(1)
 
             self._load_new_candles()
+            index = self._get_index()
 
             self._optimize_start()
             parameter = self.subaccount.subaccount_config["parameters"]

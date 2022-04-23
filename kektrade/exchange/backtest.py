@@ -27,3 +27,6 @@ class Backtest(IExchange):
         self.taker_fee: float = -0.00075
 
         self.contract_multiplier: int = 100
+
+    def is_backtest(self):
+        return True
