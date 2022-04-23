@@ -5,6 +5,7 @@ import logging
 import os
 from pathlib import Path
 import copy
+import pytz
 
 from pandas import DataFrame
 import tqdm
@@ -162,16 +163,20 @@ class EventLoop():
 
     def _load_new_candles(self) -> None:
         """
-        Periodically check based on the UTC timestamp and the timeframe if a new candle can be loaded from the
-        exchange. If a new candle exists, load it to the cache and data. If not, wait until a new candle exists.
+        Download new candles every minute. Return if a new Candle is on the dataframe.
         This function blocks the execution of the process.
         """
         if not self.subaccount.is_backtest():
+            last_candle = self.current_candle_timestamp
+            last = datetime.datetime.now()
             while True:
-                if datetime.datetime.utcnow().timestamp() > self.current_candle_timestamp:  #
+                if datetime.datetime.now().minute != last.minute:
+                    last = datetime.datetime.now()
                     self._load_candles()
-                else:
-                    time.sleep(1)
+
+                if self._get_main_df()["date"].iloc[-1] > last_candle:
+                    logger.info(f'New candle: {self._get_main_df()["date"].iloc[-1]}')
+                    return
 
     def _set_current_candle_timestamp(self) -> None:
         """
@@ -179,7 +184,7 @@ class EventLoop():
         if a new candle is available. Ideally (TIMEFRAME *  60) seconds there is a new candle available from the API.
         """
         df = self._get_main_df()
-        self.current_candle_timestamp = df["date"].iloc[-1].timestamp()
+        self.current_candle_timestamp = df["date"].iloc[-1]
 
     def _get_main_df(self) -> DataFrame:
         """
