@@ -53,29 +53,33 @@ def load_ticker(pair: PairDataInfo, data_range: DatetimePeriod) -> DataFrame:
         if data[i][0] > time.time_ns():
             del data[i]
 
-    if pair.datasource in [ExchangeEndpoint.BinanceSpot, ExchangeEndpoint.BinanceFutures,
-                      ExchangeEndpoint.BinanceFuturesCoin]:
+    if pair.datasource in [ExchangeEndpoint.BinanceFutures, ExchangeEndpoint.BinanceFuturesCoin]:
         funding_since = data[0][0]
         funding_end = data[-1][0]
         funding = []
         while True:
             tmp = _fetch_historical_funding_rates(ccxt_exchange, pair.pair, since=funding_since, limit=1000)
-            funding += tmp
-            ft = int(tmp[-1]["fundingTime"])
-            funding_since = ft
-            if len(tmp) < 1000 or ft > funding_end:
+            if len(tmp) > 0:
+                funding += tmp
+                ft = int(tmp[-1]["fundingTime"])
+                funding_since = ft
+                if len(tmp) < 1000 or ft > funding_end:
+                    break
+            else:
                 break
 
         last_start = 0
         for i in range(len(data)):
+            fr = 0.0
             for j in range(last_start, len(funding)):
                 ft = int(funding[j]["fundingTime"])
                 if ft == data[i][0]:
                     last_start = j
-                    data[i].append(float(funding[j]["fundingRate"]))
+                    fr = float(funding[j]["fundingRate"])
                     break
                 elif ft > data[i][0]:
                     break
+            data[i].append(fr)
     else:
         logger.warning("exchange doesn't provice funding data")
         for i in range(len(data)):
