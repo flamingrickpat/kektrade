@@ -34,23 +34,32 @@ def load_ticker(pair: PairDataInfo, data_range: DatetimePeriod) -> DataFrame:
     since_ms = int((data_range.start.timestamp() - padding) * 1000)
     end_ms = int((data_range.end.timestamp() + padding) * 1000)
 
-    loops = (((end_ms - since_ms) / 60000) / tf_int) / package_length
+    loops = (((end_ms - since_ms) / 60000) / tf_int)
     with tqdm.tqdm(total=loops) as pbar:
         new = ccxt_exchange.fetch_ohlcv(pair.pair, timeframe=tf, since=since_ms, limit=package_length)
+        for i in range(len(new)):
+            pbar.update(1)
+
         while True:
             since_ms = new[-1][0] + 1
             tmp = ccxt_exchange.fetch_ohlcv(pair.pair, timeframe=tf, since=since_ms, limit=package_length)
+
+            for i in range(len(tmp)):
+                pbar.update(1)
+
             new += tmp
 
             if len(tmp) == 0 or tmp[-1][0] > end_ms:
                 break
 
-            pbar.update(1)
+
 
     data = new
+    now = time.time() * 1000
+
     for i in range(len(data) - 1, -1, -1):
         data[i][0] = data[i][0] + (tf_int * 60 * 1000)
-        if data[i][0] > time.time_ns():
+        if data[i][0] > now:
             del data[i]
 
     if pair.datasource in [ExchangeEndpoint.BinanceFutures, ExchangeEndpoint.BinanceFuturesCoin]:
