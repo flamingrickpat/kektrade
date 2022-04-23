@@ -88,6 +88,9 @@ class EventLoop():
             self._load_new_candles()
             index = self._get_index()
 
+            self.subaccount.exchange.set_dataframe(self._get_main_df())
+            self.subaccount.exchange.df_position = index
+
             self._optimize_start()
             parameter = self.subaccount.subaccount_config["parameters"]
             parameter.update(self._optimize_get_parameter())
@@ -106,6 +109,10 @@ class EventLoop():
             subaccount.exchange.after_tick(index)
             self.df_position += 1
             self._progress_step()
+
+            if not self.subaccount.is_backtest():
+                if self.subaccount.config["plotting"]["enabled"]:
+                    self._plot_subaccount()
 
         if self.subaccount.is_backtest() and not self.subaccount.is_optimization():
             pbar.close()
@@ -274,14 +281,16 @@ class EventLoop():
         :param parameters: parameters
         :return: dataframe with indicators
         """
+        if not self.subaccount.is_backtest():
+            self.recalculate_inidcators = True
 
         if self.recalculate_inidcators:
             df = subaccount.strategy.populate_indicators(dataframe=df, metadata=metadata, parameters=parameters)
             utils.create_missing_columns(self.subaccount.run_settings.db_path, "ticker", df)
             df["pair_id"] = self.pair_id
 
+            con = get_engine(self.subaccount.run_settings.db_path)
             try:
-                con = get_engine(self.subaccount.run_settings.db_path)
                 con.execute(f"delete from ticker where pair_id = {self.pair_id}")
             except OperationalError:
                 pass

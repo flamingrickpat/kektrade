@@ -49,6 +49,9 @@ class BacktestInverse(Backtest):
     def set_dataframe(self, dataframe: DataFrame) -> None:
         self.df = dataframe
 
+    def set_df_position(self, position: int) -> None:
+        self.df_position = position
+
     def init_exchange(self) -> None:
         self.wallet.subaccount_id = self.subaccount_id
         self.wallet.deposit = self.initial_deposit

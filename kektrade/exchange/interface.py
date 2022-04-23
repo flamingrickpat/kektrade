@@ -58,6 +58,13 @@ class IExchange(ABC):
         pass
 
     @abstractmethod
+    def set_df_position(self, position: int) -> None:
+        """
+        Set position for dataframe.
+        """
+        pass
+
+    @abstractmethod
     def init_exchange(self) -> None:
         """
         Perform tasks necassary to bring the exchange object into operational state.
