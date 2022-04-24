@@ -4,6 +4,7 @@ from multiprocessing import Lock
 from typing import Any, List, Dict
 import datetime
 import copy
+import pytz
 
 from kektrade import utils
 from kektrade.config import RunSettings
@@ -91,7 +92,7 @@ class SubaccountItem():
 
             return DatetimePeriod(start, end)
         else:
-            end = datetime.datetime.utcnow()
+            end = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
             start = end - datetime.timedelta(minutes=self.strategy.startup_candle_count *
                                                      self.dataprovider.main_pair.timeframe)
             return DatetimePeriod(start, end)

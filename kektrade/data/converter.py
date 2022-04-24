@@ -12,4 +12,5 @@ class Converter():
         df['date'] = to_datetime(df['date'], unit='ms', utc=True, infer_datetime_format=True)
         df = df.astype(dtype={'open': 'float', 'high': 'float', 'low': 'float', 'close': 'float',
                               'volume': 'float', 'funding_rate': 'float'})
+        df["candle_count"] = 1
         return df

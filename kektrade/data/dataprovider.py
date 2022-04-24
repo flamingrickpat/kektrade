@@ -10,6 +10,7 @@ from pandas import DataFrame
 from kektrade import utils
 from kektrade.exchange.resolver import ExchangeEndpoint
 from kektrade.misc import EnumString
+from kektrade.data.volumebars import VolumeBarAggregator
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ class PairDataInfo(NamedTuple):
     api_secret: str
     pair: str
     timeframe: int
+    modifiers: list
 
 
 class DatetimePeriod(NamedTuple):
@@ -58,7 +60,8 @@ class DataProvider():
             api_key=subaccount["main_pair"].get("api_key", ""),
             api_secret=subaccount["main_pair"].get("api_secret", ""),
             pair=subaccount["main_pair"]["pair"],
-            timeframe=subaccount["main_pair"]["timeframe"]
+            timeframe=subaccount["main_pair"]["timeframe"],
+            modifiers=subaccount["main_pair"]["modifiers"]
         )
         self.main_pair = main_pair
 
@@ -69,7 +72,8 @@ class DataProvider():
                     api_key=aux_pair.get("api_key", ""),
                     api_secret=aux_pair.get("api_secret", ""),
                     pair=aux_pair["pair"],
-                    timeframe=aux_pair["timeframe"]
+                    timeframe=aux_pair["timeframe"],
+                    modifiers=aux_pair["modifiers"]
                 )
                 self.aux_pairs.append(pair)
 
@@ -89,6 +93,7 @@ class DataProvider():
             DataProvider._verify_cached_data(pair, range, path)
             df = DataProvider._read_ohlcv_csv(path)
             df = DataProvider._cut_range(df, range)
+            df = DataProvider._apply_modifiers(df, pair)
             self.pair_dataframe_dict[pair] = df
 
 
@@ -222,3 +227,17 @@ class DataProvider():
         :return: dataframe with unique rows
         """
         return df.drop_duplicates(subset=['date'], keep='last')
+
+    @staticmethod
+    def _apply_modifiers(df: DataFrame, pair: PairDataInfo) -> DataFrame:
+        """
+        Apply modifiers such as volume bars to the dataframe.
+        """
+        for modifier in pair.modifiers:
+            if modifier["type"] == "volumebars":
+                rolling_median_window = modifier["params"]["rolling_median_window"]
+                target_timeframe = modifier["params"]["target_timeframe"]
+
+                df = VolumeBarAggregator().convert(df, rolling_median_window, target_timeframe, False)
+
+        return df
