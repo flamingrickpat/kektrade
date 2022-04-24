@@ -16,6 +16,7 @@ from kektrade.exchange import Backtest
 from kektrade.database.types import Subaccount, Pair, get_engine
 from kektrade.database.types import get_session
 from kektrade.plotting import PlotterSubaccount
+from kektrade.plotting import PlotterTotal
 from kektrade.optimization import Optimizer
 from kektrade.subaccount import SubaccountItem
 from kektrade import utils
@@ -164,9 +165,11 @@ class EventLoop():
         in the dataprovider object.
         """
         with self.subaccount.file_lock:
+            logger.info("Aquire file lock")
             range = self.subaccount.get_required_datetimerange()
             self.subaccount.dataprovider.load_datasets_to_memory(range)
             self._set_current_candle_timestamp()
+            logger.info("Release file lock")
 
     def _load_new_candles(self) -> None:
         """
@@ -317,6 +320,18 @@ class EventLoop():
                 datetime.datetime(year=1900, month=1, day=1),
                 datetime.datetime.utcnow(),
                 self.subaccount.strategy.get_indicators()
+            )
+
+
+            plotter = PlotterTotal()
+            plotter.plot_total(
+                self.subaccount.run_settings.db_path,
+                Path(os.path.join(
+                    self.subaccount.run_settings.run_dir,
+                    "total.html"
+                )),
+                "Total Profit",
+                self.subaccount_id,
             )
 
     def _init_optimize(self):

@@ -1,1 +1,2 @@
 from kektrade.plotting.plotter_subaccount import PlotterSubaccount
+from kektrade.plotting.plotter_total import PlotterTotal
