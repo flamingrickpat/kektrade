@@ -6,6 +6,7 @@ from datetime import datetime
 import logging
 import pandas as pd
 from pandas import DataFrame
+import uuid
 
 from kektrade import utils
 from kektrade.exchange.resolver import ExchangeEndpoint
@@ -15,6 +16,7 @@ from kektrade.data.volumebars import VolumeBarAggregator
 logger = logging.getLogger(__name__)
 
 class PairDataInfo(NamedTuple):
+    id: str
     datasource: ExchangeEndpoint
     api_key: str
     api_secret: str
@@ -56,6 +58,7 @@ class DataProvider():
         :return:
         """
         main_pair = PairDataInfo(
+            id=str(uuid.uuid4()),
             datasource=DataproviderEndpoint.from_str(subaccount["main_pair"]["endpoint"]),
             api_key=subaccount["main_pair"].get("api_key", ""),
             api_secret=subaccount["main_pair"].get("api_secret", ""),
@@ -68,6 +71,7 @@ class DataProvider():
         if "aux_pairs" in subaccount:
             for aux_pair in subaccount["aux_pairs"]:
                 pair = PairDataInfo(
+                    id=str(uuid.uuid4()),
                     datasource=DataproviderEndpoint.from_str(aux_pair["datasource"]),
                     api_key=aux_pair.get("api_key", ""),
                     api_secret=aux_pair.get("api_secret", ""),
@@ -94,7 +98,7 @@ class DataProvider():
             df = DataProvider._read_ohlcv_csv(path)
             df = DataProvider._cut_range(df, range)
             df = DataProvider._apply_modifiers(df, pair)
-            self.pair_dataframe_dict[pair] = df
+            self.pair_dataframe_dict[pair.id] = df
 
 
     def get_pair_dataframe(self, main_pair: PairDataInfo) -> DataFrame:
@@ -103,7 +107,7 @@ class DataProvider():
         :param main_pair: pair info
         :return: dataframe
         """
-        return self.pair_dataframe_dict[main_pair]
+        return self.pair_dataframe_dict[main_pair.id]
 
 
     @staticmethod
@@ -235,6 +239,7 @@ class DataProvider():
         """
         for modifier in pair.modifiers:
             if modifier["type"] == "volumebars":
+                logger.info("Apply modifier: VolumeBars")
                 rolling_median_window = modifier["params"]["rolling_median_window"]
                 target_timeframe = modifier["params"]["target_timeframe"]
 

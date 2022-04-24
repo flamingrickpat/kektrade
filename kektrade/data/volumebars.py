@@ -100,6 +100,7 @@ class VolumeBarAggregator():
                 "low": arr_low,
                 "close": arr_close,
                 "volume": arr_volume,
+                "funding_rate": arr_funding_rate,
                 "candle_count": arr_candle_count
             }
         )

@@ -37,23 +37,17 @@ def load_ticker(pair: PairDataInfo, data_range: DatetimePeriod) -> DataFrame:
     loops = (((end_ms - since_ms) / 60000) / tf_int)
     with tqdm.tqdm(total=loops) as pbar:
         new = ccxt_exchange.fetch_ohlcv(pair.pair, timeframe=tf, since=since_ms, limit=package_length)
-        for i in range(len(new)):
-            pbar.update(1)
+        pbar.update(len(new))
 
         while True:
             since_ms = new[-1][0] + 1
             tmp = ccxt_exchange.fetch_ohlcv(pair.pair, timeframe=tf, since=since_ms, limit=package_length)
-
-            for i in range(len(tmp)):
-                pbar.update(1)
+            pbar.update(len(tmp))
 
             new += tmp
 
             if len(tmp) == 0 or tmp[-1][0] > end_ms:
                 break
-
-
-
     data = new
     now = time.time() * 1000
 
