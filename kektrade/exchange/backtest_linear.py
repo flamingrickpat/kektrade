@@ -8,11 +8,11 @@ from pandas import DataFrame
 
 from kektrade.exchange.interface import *
 from kektrade.exchange.backtest import Backtest
-from kektrade.exchange.backtest_inverse import BacktestInverse
+from kektrade.exchange.backtest_futures import BacktestFutures
 
 logger = logging.getLogger(__name__)
 
-class BacktestLinear(BacktestInverse):
+class BacktestLinear(BacktestFutures):
 
     """
          ██████╗ ██████╗ ██████╗ ███████╗██████╗

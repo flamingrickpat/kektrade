@@ -8,3 +8,4 @@ from kektrade.exchange.binance_spot import BinanceSpot
 from kektrade.exchange.backtest import Backtest
 from kektrade.exchange.interface import IExchange
 from kektrade.exchange.resolver import ExchangeResolver
+from kektrade.exchange.backtest_futures import BacktestFutures
