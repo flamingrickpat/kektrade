@@ -239,6 +239,6 @@ def calculate_wavepm_bands(df, lookback=100, wavepm_column="close", periods=None
 
     # WavePM Columns droppen weil dann alles schneller ist.
     df.drop(column_names, axis=1, inplace=True)
-    return df
+    return df.copy()
 
 
