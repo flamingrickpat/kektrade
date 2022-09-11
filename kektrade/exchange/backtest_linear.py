@@ -166,9 +166,9 @@ class BacktestLinear(BacktestInverse):
             return np.nan
 
         if self.position.contracts > 0:
-            return abs(self.position.contracts) * (self.get_open() - self.position.price)
+            return self.position.contracts * ((1 / self.position.price) - (1 / self.get_open()))
         elif self.position.contracts < 0:
-            return abs(self.position.contracts) * (self.position.price - self.get_open())
+            return self.position.contracts * ((1 / self.position.price) - (1 / self.get_open()))
 
     def _get_upnlp(self) -> float:
         """
@@ -228,13 +228,13 @@ class BacktestLinear(BacktestInverse):
                 self.wallet.total_rpnl += execution.cost
 
     def _get_order_fee_cost(self, order: Order) -> float:
-        return abs(order.contracts * order.price) * order.fee_rate
+        return abs(order.contracts / order.price) * order.fee_rate
 
     def _get_order_rpnl_long(self, order: Order, price: float) -> float:
-        return abs(order.contracts) * (price - self.position.price)
+        return self.position.contracts * ((1 / self.position.price) - (1 / self.get_open()))
 
     def _get_order_rpnl_short(self, order: Order, price: float) -> float:
-        return abs(order.contracts) * (self.position.price - price)
+        return self.position.contracts * ((1 / self.position.price) - (1 / self.get_open()))
 
     def _get_order_position_aep(self, order: Order) -> float:
         if self.position.contracts == 0:

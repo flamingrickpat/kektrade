@@ -531,9 +531,9 @@ class BacktestInverse(Backtest):
             return np.nan
 
         if self.position.contracts > 0:
-            return abs(self.position.contracts) * ((1 / self.position.price) - (1 / self.get_open()))
+            return self.position.contracts * ((1 / self.position.price) - (1 / self.get_open()))
         elif self.position.contracts < 0:
-            return abs(self.position.contracts) * ((1 / self.get_open()) - (1 / self.position.price))
+            return self.position.contracts * ((1 / self.position.price) - (1 / self.get_open()))
 
     def _get_upnlp(self) -> float:
         """
@@ -738,17 +738,14 @@ class BacktestInverse(Backtest):
         return abs(order.contracts / order.price) * order.fee_rate
 
     def _get_order_rpnl_long(self, order: Order, price: float) -> float:
-        return abs(order.contracts) * ((1 / self.position.price) - (1 / price))
+        return self.position.contracts * ((1 / self.position.price) - (1 / self.get_open()))
 
     def _get_order_rpnl_short(self, order: Order, price: float) -> float:
-        return abs(order.contracts) * ((1 / price) - (1 / self.position.price))
+        return self.position.contracts * ((1 / self.position.price) - (1 / self.get_open()))
 
     def _get_order_position_aep(self, order: Order) -> float:
         return (self.position.contracts + order.contracts) / ((self.position.contracts / self.position.price) +
                                                               (order.contracts / order.price))
-
-        #return ((order.contracts * order.price) + (self.position.contracts * self.position.price)) / \
-        #                        (order.contracts + self.position.contracts)
 
     def _execute_order(self, order: Order) -> None:
         self.orders_closed.append(order)

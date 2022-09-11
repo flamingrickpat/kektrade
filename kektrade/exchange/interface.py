@@ -38,7 +38,7 @@ class IExchange(ABC):
                     else:
                         setattr(self, key, value)
                 else:
-                    raise UnknownExchangeParameter(f"Exchange of type {self.__class__.__name__} has no parameter {key}")
+                    logger.warning(f"Exchange of type {self.__class__.__name__} has no parameter {key}")
 
     def set_config(self, config: Dict[str, Any], run_settings: RunSettings) -> None:
         """

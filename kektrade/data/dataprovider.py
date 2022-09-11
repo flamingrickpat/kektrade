@@ -57,6 +57,9 @@ class DataProvider():
         :param subaccount:
         :return:
         """
+        modifiers = None
+        if "modifiers" in subaccount["main_pair"]:
+            modifiers = subaccount["main_pair"]["modifiers"]
         main_pair = PairDataInfo(
             id=str(uuid.uuid4()),
             datasource=DataproviderEndpoint.from_str(subaccount["main_pair"]["endpoint"]),
@@ -64,7 +67,7 @@ class DataProvider():
             api_secret=subaccount["main_pair"].get("api_secret", ""),
             pair=subaccount["main_pair"]["pair"],
             timeframe=subaccount["main_pair"]["timeframe"],
-            modifiers=subaccount["main_pair"]["modifiers"]
+            modifiers=modifiers
         )
         self.main_pair = main_pair
 
@@ -237,12 +240,13 @@ class DataProvider():
         """
         Apply modifiers such as volume bars to the dataframe.
         """
-        for modifier in pair.modifiers:
-            if modifier["type"] == "volumebars":
-                logger.info("Apply modifier: VolumeBars")
-                rolling_median_window = modifier["params"]["rolling_median_window"]
-                target_timeframe = modifier["params"]["target_timeframe"]
+        if pair.modifiers is not None:
+            for modifier in pair.modifiers:
+                if modifier["type"] == "volumebars":
+                    logger.info("Apply modifier: VolumeBars")
+                    rolling_median_window = modifier["params"]["rolling_median_window"]
+                    target_timeframe = modifier["params"]["target_timeframe"]
 
-                df = VolumeBarAggregator().convert(df, rolling_median_window, target_timeframe, False)
+                    df = VolumeBarAggregator().convert(df, rolling_median_window, target_timeframe, False)
 
         return df
