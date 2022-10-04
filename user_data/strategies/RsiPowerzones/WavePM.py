@@ -10,6 +10,7 @@ import logging
 import talib
 import tqdm
 from typing import Dict, Any
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +21,11 @@ class WavePM(IStrategy):
         variables["contracts"]  = 0
 
     def populate_indicators(self, dataframe: DataFrame, metadata: Dict[str, Any], parameters: Dict[str, Any]) -> DataFrame:
-        dataframe["sma_big"] = talib.SMA(dataframe.close, timeperiod=100)
-        dataframe["sma_small"] = talib.SMA(dataframe.close, timeperiod=50)
 
-        dataframe = calculate_wavepm_bands(dataframe, wavepm_column="close", multiplikator=4, smoothing_period=7)
+        dataframe["sma"] = talib.SMA(dataframe.close, timeperiod=100)
+        dataframe["rsi"] = talib.RSI(dataframe.close, timeperiod=6)
+
+        dataframe = calculate_wavepm_bands(dataframe, wavepm_column="close", multiplikator=4, smoothing_period=0)
         self.indicators = []
 
         for col in dataframe.columns:
@@ -43,45 +45,314 @@ class WavePM(IStrategy):
         df = dataframe
         i = index
 
-        if variables["contracts"]  == 0:
-            variables["contracts"] = exchange.get_contracts_percentage(1)
-        m = variables["contracts"]
+        #if variables["contracts"]  == 0:
+        #    variables["contracts"] =
+        m = exchange.get_contracts_percentage(50)
 
         if i > 10:
             if (parameter["side"] == "long"):
-
-
-                if df.at[i, "sma_small"] > df.at[i, "sma_big"] and df.at[i - 1, "sma_small"] < df.at[i - 1, "sma_big"]:
-                    c = m
-                    exchange.open_order("", OrderType.MARKET, contracts=c)
-                elif df.at[i, "sma_small"] < df.at[i, "sma_big"]:
+                if df.at[i, "close"] > df.at[i, "bb_mid_wloxp"] and exchange.get_position().contracts == 0:
+                    exchange.open_order("", OrderType.MARKET, contracts=m)
+                if np.isnan(df.at[i, "bb_mid_wloxp"]):
+                    exchange.close_position()
+                if df.at[i, "close"] < df.at[i, "bb_mid_wloxp"]:
                     exchange.close_position()
 
             elif (parameter["side"] == "short"):
-
-
-                if df.at[i, "sma_small"] > df.at[i, "sma_big"]:
+                if df.at[i, "close"] < df.at[i, "bb_mid_wloxp"] and exchange.get_position().contracts == 0:
+                    exchange.open_order("", OrderType.MARKET, contracts=-m)
+                if np.isnan(df.at[i, "bb_mid_wloxp"]):
                     exchange.close_position()
-                elif df.at[i, "sma_small"] < df.at[i, "sma_big"] and df.at[i - 1, "sma_small"] > df.at[i - 1, "sma_big"]:
-                    c = -m
-                    exchange.open_order("", OrderType.MARKET, contracts=c)
+                if df.at[i, "close"] > df.at[i, "bb_mid_wloxp"]:
+                    exchange.close_position()
 
     def get_indicators(self):
-        return self.indicators
-
         return [
             {
                 "plot": True,
-                "name": "sma_big",
+                "name": "rsi",
+                "overlay": False,
+                "scatter": False,
+                "color": "red"
+            },
+            {
+                "plot": True,
+                "name": "sma",
                 "overlay": True,
                 "scatter": False,
                 "color": "red"
             },
             {
                 "plot": True,
-                "name": "sma_small",
+                "name": "bb_upper_wloxp",
                 "overlay": True,
                 "scatter": False,
                 "color": "blue"
+            },
+            {
+                "plot": True,
+                "name": "bb_mid_wloxp",
+                "overlay": True,
+                "scatter": False,
+                "color": "blue"
+            },
+            {
+                "plot": True,
+                "name": "bb_lower_wloxp",
+                "overlay": True,
+                "scatter": False,
+                "color": "blue"
+            },
+            {
+                "plot": True,
+                "name": "bb_upper_wloxp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "blue"
+            },
+            {
+                "plot": True,
+                "name": "bb_mid_wloxp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "blue"
+            },
+            {
+                "plot": True,
+                "name": "bb_lower_wloxp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "blue"
+            },
+
+            {
+                "plot": True,
+                "name": "bb_upper_wclcp",
+                "overlay": True,
+                "scatter": False,
+                "color": "green"
+            },
+            {
+                "plot": True,
+                "name": "bb_mid_wclcp",
+                "overlay": True,
+                "scatter": False,
+                "color": "green"
+            },
+            {
+                "plot": True,
+                "name": "bb_lower_wclcp",
+                "overlay": True,
+                "scatter": False,
+                "color": "green"
+            },
+            {
+                "plot": True,
+                "name": "bb_upper_wclcp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "green"
+            },
+            {
+                "plot": True,
+                "name": "bb_mid_wclcp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "green"
+            },
+            {
+                "plot": True,
+                "name": "bb_lower_wclcp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "green"
+            },
+
+            {
+                "plot": True,
+                "name": "bb_upper_wlntp",
+                "overlay": True,
+                "scatter": False,
+                "color": "orange"
+            },
+            {
+                "plot": True,
+                "name": "bb_mid_wlntp",
+                "overlay": True,
+                "scatter": False,
+                "color": "orange"
+            },
+            {
+                "plot": True,
+                "name": "bb_lower_wlntp",
+                "overlay": True,
+                "scatter": False,
+                "color": "orange"
+            },
+            {
+                "plot": True,
+                "name": "bb_upper_wlntp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "orange"
+            },
+            {
+                "plot": True,
+                "name": "bb_mid_wlntp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "orange"
+            },
+            {
+                "plot": True,
+                "name": "bb_lower_wlntp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "orange"
+            },
+
+            {
+                "plot": True,
+                "name": "rsi",
+                "overlay": False,
+                "scatter": False,
+                "color": "red"
+            },
+            {
+                "plot": True,
+                "name": "sma",
+                "overlay": True,
+                "scatter": False,
+                "color": "red"
+            },
+            {
+                "plot": True,
+                "name": "bb_upper_loxp",
+                "overlay": True,
+                "scatter": False,
+                "color": "blue"
+            },
+            {
+                "plot": True,
+                "name": "bb_mid_loxp",
+                "overlay": True,
+                "scatter": False,
+                "color": "blue"
+            },
+            {
+                "plot": True,
+                "name": "bb_lower_loxp",
+                "overlay": True,
+                "scatter": False,
+                "color": "blue"
+            },
+            {
+                "plot": True,
+                "name": "bb_upper_loxp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "blue"
+            },
+            {
+                "plot": True,
+                "name": "bb_mid_loxp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "blue"
+            },
+            {
+                "plot": True,
+                "name": "bb_lower_loxp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "blue"
+            },
+
+            {
+                "plot": True,
+                "name": "bb_upper_clcp",
+                "overlay": True,
+                "scatter": False,
+                "color": "green"
+            },
+            {
+                "plot": True,
+                "name": "bb_mid_clcp",
+                "overlay": True,
+                "scatter": False,
+                "color": "green"
+            },
+            {
+                "plot": True,
+                "name": "bb_lower_clcp",
+                "overlay": True,
+                "scatter": False,
+                "color": "green"
+            },
+            {
+                "plot": True,
+                "name": "bb_upper_clcp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "green"
+            },
+            {
+                "plot": True,
+                "name": "bb_mid_clcp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "green"
+            },
+            {
+                "plot": True,
+                "name": "bb_lower_clcp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "green"
+            },
+
+            {
+                "plot": True,
+                "name": "bb_upper_lntp",
+                "overlay": True,
+                "scatter": False,
+                "color": "orange"
+            },
+            {
+                "plot": True,
+                "name": "bb_mid_lntp",
+                "overlay": True,
+                "scatter": False,
+                "color": "orange"
+            },
+            {
+                "plot": True,
+                "name": "bb_lower_lntp",
+                "overlay": True,
+                "scatter": False,
+                "color": "orange"
+            },
+            {
+                "plot": True,
+                "name": "bb_upper_lntp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "orange"
+            },
+            {
+                "plot": True,
+                "name": "bb_mid_lntp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "orange"
+            },
+            {
+                "plot": True,
+                "name": "bb_lower_lntp32",
+                "overlay": True,
+                "scatter": False,
+                "color": "orange"
             }
+            
+            
         ]

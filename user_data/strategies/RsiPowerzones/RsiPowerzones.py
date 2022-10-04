@@ -26,6 +26,7 @@ class RsiPowerzones(IStrategy):
 
     def populate_variables(self, variables: Dict[str, Any]) -> None:
         variables["rsi"] = 0
+        variables["contracts"] = 0
 
     def populate_indicators(self, dataframe: DataFrame, metadata: Dict[str, Any], parameters: Dict[str, Any]) -> DataFrame:
         for rsi in parameters["rsi"]:
@@ -40,7 +41,10 @@ class RsiPowerzones(IStrategy):
         df = dataframe
         i = index
 
-        c = 1 #exchange.get_contracts_percentage(0.01)
+        if variables["contracts"]  == 0:
+            variables["contracts"] = exchange.get_contracts_percentage(0.01)
+
+        c = variables["contracts"]
 
         side = parameter["side"]
         rsi = parameter["rsi"]

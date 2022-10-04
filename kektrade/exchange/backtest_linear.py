@@ -227,6 +227,7 @@ class BacktestLinear(BacktestFutures):
 
                 self.wallet.total_rpnl += execution.cost
 
+
     def _get_order_fee_cost(self, order: Order) -> float:
         return abs(order.contracts / order.price) * order.fee_rate
 
@@ -237,8 +238,5 @@ class BacktestLinear(BacktestFutures):
         return self.position.contracts * ((1 / self.position.price) - (1 / self.get_open()))
 
     def _get_order_position_aep(self, order: Order) -> float:
-        if self.position.contracts == 0:
-            return order.price
-        else:
-            return ((order.contracts * order.price) + (self.position.contracts * self.position.price)) / \
-                                (order.contracts + self.position.contracts)
+        return (self.position.contracts + order.contracts) / ((self.position.contracts / self.position.price) +
+                                                              (order.contracts / order.price))

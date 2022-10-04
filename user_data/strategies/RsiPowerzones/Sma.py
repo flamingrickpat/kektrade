@@ -13,9 +13,10 @@ logger = logging.getLogger(__name__)
 
 # This class is a sample. Feel free to customize it.
 class Sma(IStrategy):
+    startup_candle_count = 1000
 
     def populate_variables(self, variables: Dict[str, Any]) -> None:
-        pass
+        variables["contracts"]  = 0
 
     def populate_indicators(self, dataframe: DataFrame, metadata: Dict[str, Any], parameters: Dict[str, Any]) -> DataFrame:
         dataframe["sma_big"] = talib.SMA(dataframe.close, timeperiod=100)
@@ -26,7 +27,9 @@ class Sma(IStrategy):
         df = dataframe
         i = index
 
-        m = exchange.get_contracts_percentage(1)
+        if variables["contracts"]  == 0:
+            variables["contracts"] = exchange.get_contracts_percentage(1)
+        m = variables["contracts"]
 
         if i > 10:
             if (parameter["side"] == "long"):

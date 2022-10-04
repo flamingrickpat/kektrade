@@ -242,11 +242,12 @@ class DataProvider():
         """
         if pair.modifiers is not None:
             for modifier in pair.modifiers:
-                if modifier["type"] == "volumebars":
-                    logger.info("Apply modifier: VolumeBars")
-                    rolling_median_window = modifier["params"]["rolling_median_window"]
-                    target_timeframe = modifier["params"]["target_timeframe"]
+                if modifier["enabled"] == True:
+                    if modifier["type"] == "volumebars":
+                        logger.info("Apply modifier: VolumeBars")
+                        rolling_median_window = modifier["params"]["rolling_median_window"]
+                        target_timeframe = modifier["params"]["target_timeframe"]
 
-                    df = VolumeBarAggregator().convert(df, rolling_median_window, target_timeframe, False)
+                        df = VolumeBarAggregator().convert(df, rolling_median_window, target_timeframe, False)
 
         return df
