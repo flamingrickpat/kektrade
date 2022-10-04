@@ -1,6 +1,7 @@
 from pandas import Series
 from pandas import DataFrame
 import numpy as np
+import pandas as pd
 
 def rolling_mean(series, window=200, min_periods=None):
     return series.rolling(window=window, min_periods=min_periods).mean()
@@ -31,10 +32,12 @@ def wave_pm(series, window, look_back_periods=100):
     wavePM = osc(dev, ma, look_back_periods)
     wavePM.iloc[0:window] = 0
 
-    return DataFrame(index=series.index, data={"wavePM": wavePM})
+    return wavePM
 
 
-def calculate_wavepm_bands(df, lookback=100, wavepm_column="close", periods=None, min_period=6, smoothing_period=0, multiplikator=1):
+def calculate_wavepm_bands(df, lookback=100, wavepm_column="close", periods=None, min_period=14, smoothing_period=0, multiplikator=1):
+    df_orig = df
+
     def Sma(src, p):
         l = np.arange(len(src)) - p.values
 
@@ -74,39 +77,40 @@ def calculate_wavepm_bands(df, lookback=100, wavepm_column="close", periods=None
     column_names = []
     for i in periods:
         colname = f"{i}"
-        df[colname] = wave_pm(df[wavepm_column], window=i, look_back_periods=lookback * multiplikator)
+        series = wave_pm(df[wavepm_column], window=i, look_back_periods=lookback * multiplikator)
+        df = pd.concat([df, series.rename(colname)], axis=1)
+
         column_index_map[i] = df.columns.get_loc(colname)
         column_names.append(colname)
 
-    df_wavepms = df[column_names]
-    df_wavepms_loxp = df_wavepms.reset_index(drop=True)
-    df_wavepms_clcp = df_wavepms.reset_index(drop=True)
-    df_wavepms_lntp = df_wavepms.reset_index(drop=True)
+    df_wavepms_loxp = df[column_names].copy()
+    df_wavepms_clcp = df[column_names].copy()
+    df_wavepms_lntp = df[column_names].copy()
 
     LIMIT_LOXP = 0.9
     LIMIT_CLCP = 0.3
     LIMIT_LNTP = 0.6
 
-    COOLOFF_PERIOD = 10
+    COOLOFF_PERIOD = 0
 
     for col in column_names:
         val = int(col)
         df_wavepms_loxp[col] = np.where(df_wavepms_loxp[col] > LIMIT_LOXP, val, 0)
-        df_wavepms_clcp[col] = np.where(df_wavepms_clcp[col] < LIMIT_CLCP, val, 0)
-        df_wavepms_lntp[col] = np.where(df_wavepms_lntp[col] < LIMIT_LNTP, val, 0)
+        df_wavepms_clcp[col] = np.where((df_wavepms_clcp[col] < LIMIT_CLCP) & (df_wavepms_clcp[col] > 0), val, 0)
+        df_wavepms_lntp[col] = np.where((df_wavepms_lntp[col] < LIMIT_LNTP) & (df_wavepms_lntp[col] > 0), val, 0)
 
-    df_wavepms_loxp["0"] = 1
-    df_wavepms_clcp["0"] = 1
-    df_wavepms_lntp["0"] = 1
+    df_wavepms_loxp = pd.concat([df_wavepms_loxp, pd.Series([1 for x in range(len(df_wavepms_loxp.index))]).rename("0")], axis=1)
+    df_wavepms_clcp = pd.concat([df_wavepms_clcp, pd.Series([1 for x in range(len(df_wavepms_clcp.index))]).rename("0")], axis=1)
+    df_wavepms_lntp = pd.concat([df_wavepms_lntp, pd.Series([1 for x in range(len(df_wavepms_lntp.index))]).rename("0")], axis=1)
 
     df["loxp"] = df_wavepms_loxp.idxmax(axis=1).astype(int)
     df["clcp"] = df_wavepms_clcp.idxmax(axis=1).astype(int)
     df["tlcp"] = 0
     df["lntp"] = df_wavepms_lntp.idxmax(axis=1).astype(int)
 
-    del df_wavepms_loxp
-    del df_wavepms_clcp
-    del df_wavepms_lntp
+    #del df_wavepms_loxp
+    #del df_wavepms_clcp
+    #del df_wavepms_lntp
 
     df["wloxp"] = 0
     df["wclcp"] = 0
@@ -161,6 +165,8 @@ def calculate_wavepm_bands(df, lookback=100, wavepm_column="close", periods=None
                 period_wloxp = 0
                 last_period_wloxp = 0
             cooloff_wloxp -= 1
+
+            # Crossover beendet LOXP
             if ((src.iloc[i] > loxp_m.iloc[i]) and (src.iloc[i - 1] < loxp_m.iloc[i - 1])) or \
                     ((src.iloc[i] < loxp_m.iloc[i]) and (src.iloc[i - 1] > loxp_m.iloc[i - 1])):
                 period_wloxp = 0
@@ -221,24 +227,24 @@ def calculate_wavepm_bands(df, lookback=100, wavepm_column="close", periods=None
         band_m = Sma(src, vband)
         band_s = Stdev(src, vband)
 
-        df[f"{band}_m"] = band_m
-        df[f"{band}_s"] = band_s
+        df_orig[f"{band}_m"] = band_m
+        df_orig[f"{band}_s"] = band_s
 
-        df[f"bb_upper_{band}32"] = bandMaker(band_m, band_s, 3.2)
-        df[f"bb_upper_{band}"] = bandMaker(band_m, band_s, 1.25)
-        df[f"bb_mid_{band}"] = band_m
-        df[f"bb_lower_{band}"] = bandMaker(band_m, band_s, -1.25)
-        df[f"bb_lower_{band}32"] = bandMaker(band_m, band_s, -3.2)
+        df_orig[f"bb_upper_{band}32"] = bandMaker(band_m, band_s, 3.2)
+        df_orig[f"bb_upper_{band}"] = bandMaker(band_m, band_s, 1.25)
+        df_orig[f"bb_mid_{band}"] = band_m
+        df_orig[f"bb_lower_{band}"] = bandMaker(band_m, band_s, -1.25)
+        df_orig[f"bb_lower_{band}32"] = bandMaker(band_m, band_s, -3.2)
 
         if smoothing_period > 0:
-            df[f"bb_upper_{band}32"] = df[f"bb_upper_{band}32"].rolling(smoothing_period).mean()
-            df[f"bb_upper_{band}"]   = df[f"bb_upper_{band}"].rolling(smoothing_period).mean()
-            df[f"bb_mid_{band}"]     = df[f"bb_mid_{band}"].rolling(smoothing_period).mean()
-            df[f"bb_lower_{band}"]   = df[f"bb_lower_{band}"].rolling(smoothing_period).mean()
-            df[f"bb_lower_{band}32"] = df[f"bb_lower_{band}32"].rolling(smoothing_period).mean()
+            df_orig[f"bb_upper_{band}32"] = df_orig[f"bb_upper_{band}32"].rolling(smoothing_period).mean()
+            df_orig[f"bb_upper_{band}"]   = df_orig[f"bb_upper_{band}"].rolling(smoothing_period).mean()
+            df_orig[f"bb_mid_{band}"]     = df_orig[f"bb_mid_{band}"].rolling(smoothing_period).mean()
+            df_orig[f"bb_lower_{band}"]   = df_orig[f"bb_lower_{band}"].rolling(smoothing_period).mean()
+            df_orig[f"bb_lower_{band}32"] = df_orig[f"bb_lower_{band}32"].rolling(smoothing_period).mean()
 
     # WavePM Columns droppen weil dann alles schneller ist.
-    df.drop(column_names, axis=1, inplace=True)
-    return df.copy()
+    #df_orig.drop(column_names, axis=1, inplace=True)
+    return df_orig
 
 
